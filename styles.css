@@ -62,3 +62,7 @@ body {
   border-radius: 7px;
   font-size: 50px;
 }
+
+.resetBtn:hover {
+  background-color: grey;
+}
