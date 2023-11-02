@@ -126,20 +126,23 @@ function GameController(
   const players = [
     {
       name: p1Name,
-      token: 'o'
+      token: 'O'
     },
     {
       name: p2Name,
-      token: 'x'
+      token: 'X'
     }
   ];
 
   let activePlayer = players[0]   /* set current active player */
 
+  let gameState = 0; /* 0 - ongoing, 1 - over */
+
   /* Getters */
   const getActiveBoard = () => board.getBoard();
   const getActivePlayer = () => activePlayer;
   const getAcitveCell = (row, col) => board.getCell(row, col);
+  const getGameState = () => gameState;
 
   /* Switch Active Player */
   const switchPlayer = () => {
@@ -155,14 +158,17 @@ function GameController(
   /* Plays a round. Drops token, switches player, prints board */
   const playRound = (row, col) => {
     /* Drop token */
-    board.dropToken(row, col, getActivePlayer().token);
+    if (board.dropToken(row, col, getActivePlayer().token) != 1) {
+      console.log("invalid token");
+      return false;
+    };
 
     /* output new board state */
     printNewRound();
 
-    /* check for win */
+    /* check for win. Stop logic after win*/
     if (board.checkWin(getActivePlayer().token)) {
-      // TODO: reset board here?
+      gameState = 1;
       return true;
     }
 
@@ -171,11 +177,20 @@ function GameController(
     return false;
   }
 
+  /* Resets Game */
+  const resetGame = () => {
+    activePlayer = players[0];
+    gameState = 0;
+    board.clearBoard();
+  }
+
   return {
-   getActiveBoard,
-   getActivePlayer,
-   playRound,
-   getAcitveCell
+    getActiveBoard,
+    getActivePlayer,
+    playRound,
+    getAcitveCell,
+    resetGame,
+    getGameState
   }
 }
 
@@ -185,10 +200,11 @@ function ScreenController(n=3) {
   /* set dom elements */
   const turnDiv = document.querySelector('.turn');
   const boardDiv = document.querySelector('.board');
+  const resetBtn = document.querySelector('.resetBtn');
 
   /* Render Gameboard */
   // TODO: let players choose dimension
-  const renderBoard = (board) => {
+  const renderBoard = () => {
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
         let cell = gameController.getAcitveCell(r, c);
@@ -200,7 +216,8 @@ function ScreenController(n=3) {
         /* add data attribute for id */
         cellBtn.dataset.row = r;
         cellBtn.dataset.col = c;
-        cellBtn.textContent = cell.getCellValue();
+        if (cell.getCellValue() == 0) cellBtn.textContent = "";
+        else cellBtn.textContent = cell.getCellValue();
         boardDiv.appendChild(cellBtn);
       }
     }
@@ -215,24 +232,32 @@ function ScreenController(n=3) {
     const board = gameController.getActiveBoard();
     const activePlayer = gameController.getActivePlayer();
 
-    /* dispalyer player turn */
-    turnDiv.textContent = `${activePlayer.name}'s turn`;
+    /* dispalyer player turn or win */
+    if (gameController.getGameState() == 0) turnDiv.textContent = `Player ${activePlayer.token}'s turn`;
+    else turnDiv.textContent = `Player ${activePlayer.token} wins!`;
 
     renderBoard(board);
   }
 
   const clickHanlderBoard = (e) => {
-    console.log(e.target)
+    if (gameController.getGameState() == 1) return;
+    console.log(e.target.dataset);
     const row = e.target.dataset.row;
-    const col = e.taget.dataset.col;
+    const col = e.target.dataset.col;
 
     if (!row || !col) return;
 
-    gameController.playRound(Number(row), Number(row));
+    gameController.playRound(Number(row), Number(col));
+    updateScreen();
+  }
+
+  const clickHandlerReset = () => {
+    gameController.resetGame();
     updateScreen();
   }
 
   boardDiv.addEventListener('click', clickHanlderBoard);
+  resetBtn.addEventListener('click', clickHandlerReset);
   updateScreen();
 }
 
