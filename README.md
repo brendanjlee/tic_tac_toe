@@ -2,4 +2,4 @@
 
 Tic-Tac-Toe game created with HTML, CSS and JS.
 
-[Demo](https://github.com/brendanjlee/tic_tac_toe)
+[Demo](https://brendanjlee.github.io/tic_tac_toe/)
